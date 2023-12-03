@@ -15,6 +15,7 @@ class TravelerMessageDispatcher internal constructor() {
             Traveler.logger.warn("Message content intent is not enabled. Please enable it for Traveler to work.")
             return
         }
+        if (event.messageAuthor.isBotUser) return
         if (event.messageContent.isEmpty()) return
 
         val options = OptionSeparator.separate(event.messageContent)
