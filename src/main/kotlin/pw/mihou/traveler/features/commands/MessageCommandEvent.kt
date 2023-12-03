@@ -1,0 +1,101 @@
+package pw.mihou.traveler.features.commands
+
+import kotlinx.coroutines.future.await
+import org.javacord.api.DiscordApi
+import org.javacord.api.event.message.MessageCreateEvent
+import pw.mihou.traveler.features.commands.options.MessageCommandOption
+import pw.mihou.traveler.features.commands.options.MessageParameters
+import pw.mihou.traveler.features.commands.schema.SchemaDecoder
+import pw.mihou.traveler.features.commands.schema.SchemaOptions
+import java.lang.IllegalArgumentException
+import kotlin.jvm.optionals.getOrNull
+
+class MessageCommandEvent(
+    val options: List<MessageCommandOption>,
+    val originalEvent: MessageCreateEvent,
+    val command: MessageCommand
+) {
+    val channel get() = originalEvent.channel
+    val api get() = originalEvent.api
+    val author get() = originalEvent.messageAuthor
+    val content get() = originalEvent.messageContent
+    val message get() = originalEvent.message
+
+    private var `$schema`: MessageCommandEventSchema? = null
+    val store = command.store.toMutableMap()
+
+    val schema: MessageCommandEventSchema? get() {
+        if (`$schema` == null) {
+            val schemas = command.schemas
+                ?: throw IllegalArgumentException("Command ${command.name} does not have any schema definitions.")
+            for (schema in schemas) {
+                val result = SchemaDecoder.scan(this, schema)
+                if (result.matches) {
+                    `$schema` = MessageCommandEventSchema(api, schema, result.options)
+                    break
+                }
+            }
+        }
+
+        return `$schema`
+    }
+
+    /**
+     * Gets the value of the given key from the [MessageCommandEvent.store] and maps it into the type given
+     * if possible, otherwise returns null.
+     *
+     * @param key   The key to get from the [MessageCommandEvent.store].
+     * @param type  The type expected of the value.
+     * @param <T>   The type expected of the value.
+     *
+     * @return The value mapped with the key in [MessageCommandEvent.store] mapped to the type, otherwise null.
+    </T> */
+    operator fun <T> get(key: String, type: Class<T>): T? {
+        if (!store.containsKey(key)) return null
+        val `object` = store[key]
+        return if (type.isAssignableFrom(`object`!!.javaClass)) { type.cast(`object`) } else null
+    }
+
+    /**
+     * Gets the value of the given key from the [MessageCommandEvent.store].
+     *
+     * @param key   The key to get from the [MessageCommandEvent.store].*
+     * @return The value mapped with the key in [MessageCommandEvent.store], otherwise null.
+     */
+    operator fun get(key: String): Any? {
+        return store[key]
+    }
+
+    fun getOption(index: Int) = options.getOrNull(index)
+}
+
+data class MessageCommandEventSchema(private val api: DiscordApi, val schema: String, val options: SchemaOptions) {
+    private fun <T> Any.cast(into: Class<T>): T? {
+        return if (into.isAssignableFrom(this.javaClass)) { into.cast(this) } else null
+    }
+
+    fun getArgumentStringByName(name: String) = options[name]?.cast(String::class.java)
+    fun getArgumentLongByName(name: String) = options[name]?.cast(Long::class.java)
+    fun getArgumentIntegerByName(name: String) = options[name]?.cast(Int::class.java)
+    fun getArgumentBooleanByName(name: String) = options[name]?.cast(Boolean::class.java)
+    fun getArgumentDoubleByName(name: String) = options[name]?.cast(Double::class.java)
+    fun getArgumentFloatByName(name: String) = options[name]?.cast(Float::class.java)
+
+    fun getArgumentUserByName(name: String) = getArgumentLongByName(name)?.run { api.getCachedUserById(this).getOrNull() }
+    suspend fun requestArgumentUserByName(name: String) = getArgumentLongByName(name)?.run {
+        api.getCachedUserById(this).getOrNull() ?: api.getUserById(this).await()
+    }
+
+    fun getArgumentRoleByName(name: String) = getArgumentLongByName(name)?.run { api.getRoleById(this).getOrNull() }
+    fun getArgumentChannelByName(name: String) = getArgumentLongByName(name)?.run { api.getChannelById(this).getOrNull() }
+    fun getArgumentVoiceChannelByName(name: String) = getArgumentLongByName(name)?.run { api.getVoiceChannelById(this).getOrNull() }
+    fun getArgumentTextChannelByName(name: String) = getArgumentLongByName(name)?.run { api.getTextChannelById(this).getOrNull() }
+    fun getArgumentCustomEmojiByName(name: String) = getArgumentLongByName(name)?.run { api.getCustomEmojiById(this).getOrNull() }
+
+    fun getArgumentMessageByName(name: String) = options[name]?.cast(MessageParameters::class.java)
+    suspend fun requestArgumentMessageByName(name: String) = getArgumentMessageByName(name)?.run {
+        val channel = api.getTextChannelById(channel).getOrNull() ?: return null
+        api.getMessageById(id, channel).await()
+    }
+}
+
