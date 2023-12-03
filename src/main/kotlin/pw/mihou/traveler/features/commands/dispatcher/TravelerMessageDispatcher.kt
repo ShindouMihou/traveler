@@ -12,6 +12,7 @@ import kotlin.jvm.optionals.getOrNull
 class TravelerMessageDispatcher internal constructor() {
     suspend fun dispatch(event: MessageCreateEvent) {
         if (!event.api.intents.contains(Intent.MESSAGE_CONTENT)) {
+            Traveler.logger.warn("Message content intent is not enabled. Please enable it for Traveler to work.")
             return
         }
         if (event.messageContent.isEmpty()) return
