@@ -70,16 +70,16 @@ class MessageCommandEvent(
 }
 
 data class MessageCommandEventSchema(private val api: DiscordApi, val schema: String, val options: SchemaOptions) {
-    private fun <T> Any.cast(into: Class<T>): T? {
-        return if (into.isAssignableFrom(this.javaClass)) { into.cast(this) } else null
+    private inline fun <reified T> Any.cast(): T? {
+        return if (this is T) this else null
     }
 
-    fun getArgumentStringByName(name: String) = options[name]?.cast(String::class.java)
-    fun getArgumentLongByName(name: String) = options[name]?.cast(Long::class.java)
-    fun getArgumentIntegerByName(name: String) = options[name]?.cast(Int::class.java)
-    fun getArgumentBooleanByName(name: String) = options[name]?.cast(Boolean::class.java)
-    fun getArgumentDoubleByName(name: String) = options[name]?.cast(Double::class.java)
-    fun getArgumentFloatByName(name: String) = options[name]?.cast(Float::class.java)
+    fun getArgumentStringByName(name: String) = options[name]?.cast<String>()
+    fun getArgumentLongByName(name: String) = options[name]?.cast<Long>()
+    fun getArgumentIntegerByName(name: String) = options[name]?.cast<Int>()
+    fun getArgumentBooleanByName(name: String) = options[name]?.cast<Boolean>()
+    fun getArgumentDoubleByName(name: String) = options[name]?.cast<Double>()
+    fun getArgumentFloatByName(name: String) = options[name]?.cast<Float>()
 
     fun getArgumentUserByName(name: String) = getArgumentLongByName(name)?.run { api.getCachedUserById(this).getOrNull() }
     suspend fun requestArgumentUserByName(name: String) = getArgumentLongByName(name)?.run {
@@ -92,7 +92,7 @@ data class MessageCommandEventSchema(private val api: DiscordApi, val schema: St
     fun getArgumentTextChannelByName(name: String) = getArgumentLongByName(name)?.run { api.getTextChannelById(this).getOrNull() }
     fun getArgumentCustomEmojiByName(name: String) = getArgumentLongByName(name)?.run { api.getCustomEmojiById(this).getOrNull() }
 
-    fun getArgumentMessageByName(name: String) = options[name]?.cast(MessageParameters::class.java)
+    fun getArgumentMessageByName(name: String) = options[name]?.cast<MessageParameters>()
     suspend fun requestArgumentMessageByName(name: String) = getArgumentMessageByName(name)?.run {
         val channel = api.getTextChannelById(channel).getOrNull() ?: return null
         api.getMessageById(id, channel).await()
