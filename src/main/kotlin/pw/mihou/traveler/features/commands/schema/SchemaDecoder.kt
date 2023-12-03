@@ -34,6 +34,9 @@ object SchemaDecoder {
         val definitions = cache.computeIfAbsent(schema) {
             decode(ev.command.name, schema)
         }
+        if (definitions.size != ev.options.size) {
+            return SchemaResult(false, emptyMap())
+        }
         val options = mutableMapOf<String, Any?>()
 
         for ((index, option) in ev.options.withIndex()) {

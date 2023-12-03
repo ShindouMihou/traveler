@@ -18,7 +18,7 @@ class TravelerMessageDispatcher internal constructor() {
         if (event.messageAuthor.isBotUser) return
         if (event.messageContent.isEmpty()) return
 
-        val options = OptionSeparator.separate(event.messageContent)
+        val options = OptionSeparator.separate(event.messageContent.trim())
         if (options.isEmpty()) {
             // How would this happen???
             throw IllegalStateException("No content found during separation, this is likely a bug.")
