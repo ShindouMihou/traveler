@@ -9,8 +9,8 @@ import java.util.*
 
 typealias FastLoggingFormatter = (time: Instant, level: LogLevel, message: String) -> String
 
-// Nexus' logging adapter transported down to Traveler.
-// CC: https://github.com/ShindouMihou/Nexus
+// Traveler' logging adapter transported down to Traveler.
+// CC: https://github.com/ShindouMihou/Traveler
 object FastLoggingAdapter: LoggingAdapter {
 
     @Volatile @JvmField var datetimeFormatter: DateTimeFormatter = DateTimeFormatter
@@ -21,7 +21,7 @@ object FastLoggingAdapter: LoggingAdapter {
             time: Instant,
             level: LogLevel,
             message: String
-        -> "${datetimeFormatter.format(time)} $level Nexus $message"
+        -> "${datetimeFormatter.format(time)} $level Traveler $message"
     }
 
     @Volatile @JvmField var allowed: MutableSet<LogLevel> = mutableSetOf(
@@ -31,7 +31,7 @@ object FastLoggingAdapter: LoggingAdapter {
     )
 
     /**
-     * It is recommended to set this as false when using for Nexus only as the framework no longer
+     * It is recommended to set this as false when using for Traveler only as the framework no longer
      * uses placeholders, but instead interpolate the data directly using Kotlin's string templates.
      *
      * (If for some reason that you are also using this for logger, you can set this as true, but this will
@@ -40,7 +40,7 @@ object FastLoggingAdapter: LoggingAdapter {
     @Volatile @JvmField var usePlaceholders = false
 
     /**
-     * Formats the Nexus log messages which are based out of
+     * Formats the Traveler log messages which are based out of
      * SLF4J-standard into log messages that are complete and readable.
      *
      * @param message   The message to format.
