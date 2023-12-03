@@ -10,14 +10,6 @@ object OptionSeparator {
         var inQuotations = false
 
         for ((index, char) in text.withIndex()) {
-            if (char == '"' || char == '\'') {
-                // if not escaped
-                if (previous != '\\') {
-                    inQuotations = !inQuotations
-                    continue
-                }
-            }
-
             fun append() {
                 val option = current.toString()
                 separated.add(option)
@@ -25,6 +17,17 @@ object OptionSeparator {
                 current.clear()
                 previous = ' '
                 inQuotations = false
+            }
+
+            if (char == '"' || char == '\'') {
+                // if not escaped
+                if (previous != '\\') {
+                    inQuotations = !inQuotations
+                    if (index == (text.length - 1)) {
+                        append()
+                    }
+                    continue
+                }
             }
 
             if (char == ' ') {
