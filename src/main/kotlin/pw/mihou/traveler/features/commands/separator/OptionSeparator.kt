@@ -34,13 +34,13 @@ object OptionSeparator {
                 }
             }
 
+            current.append(char)
+            previous = char
+
             if (index == (text.length - 1)) {
                 append()
                 continue
             }
-
-            current.append(char)
-            previous = char
         }
 
         return separated
