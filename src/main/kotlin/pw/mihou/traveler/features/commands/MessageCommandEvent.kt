@@ -16,10 +16,24 @@ class MessageCommandEvent(
     val command: MessageCommand
 ) {
     val channel get() = originalEvent.channel
+    val serverTextChannel get() = originalEvent.serverTextChannel.getOrNull()
+    val privateChannel get() = originalEvent.privateChannel.getOrNull()
+    val serverVoiceChannel get() = originalEvent.serverVoiceChannel.getOrNull()
+    val serverThreadChannel get() = originalEvent.serverThreadChannel.getOrNull()
+
+    val readableMessageContent get() = originalEvent.readableMessageContent
+
+    val isServerMessage get() = originalEvent.isServerMessage
+    val isPrivateMessage get() = originalEvent.isPrivateMessage
+
     val api get() = originalEvent.api
     val author get() = originalEvent.messageAuthor
     val content get() = originalEvent.messageContent
     val message get() = originalEvent.message
+    val messageLink get() = originalEvent.messageLink
+    val messageId get() = originalEvent.messageId
+
+    val server get() = originalEvent.server.getOrNull()
 
     private var `$schema`: MessageCommandEventSchema? = null
     val store = command.store.toMutableMap()
@@ -50,10 +64,10 @@ class MessageCommandEvent(
      *
      * @return The value mapped with the key in [MessageCommandEvent.store] mapped to the type, otherwise null.
     </T> */
-    operator fun <T> get(key: String, type: Class<T>): T? {
+    inline fun <reified T> get(key: String): T? {
         if (!store.containsKey(key)) return null
         val `object` = store[key]
-        return if (type.isAssignableFrom(`object`!!.javaClass)) { type.cast(`object`) } else null
+        return if (`object` is T) `object` else null
     }
 
     /**
