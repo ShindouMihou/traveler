@@ -39,6 +39,15 @@ val builder = DiscordApiBuilder()
     .addListener(Traveler)
 ```
 
+Remember that the use of this framework requires the `Message Content` intent, which can be added using the Javacord 
+method: `.addIntent`:
+```kotlin
+val builder = DiscordApiBuilder()
+    .setToken(...)
+    .addListener(Traveler)
+    .addIntent(Intent.MESSAGE_CONTENT)
+```
+
 If you want to add a command, simply use the `Traveler.add(commands)` method:
 ```kotlin
 Traveler.add(PingCommand)
