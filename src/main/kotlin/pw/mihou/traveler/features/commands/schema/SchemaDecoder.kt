@@ -65,9 +65,9 @@ object SchemaDecoder {
         val currentType = StringBuilder()
 
         var inEnclosure = false
-        var destination = SchemaDefinitionDestination.Name
+        var destination = SchemaDefinitionDestination.Type
 
-        for (char in schema) {
+        for ((index, char) in schema.withIndex()) {
             if (char == '[') {
                 if (inEnclosure) {
                     throw SchemaDecodeException(command, "Use of '[' key is disallowed for any other purposes other than marking the start of an option.")
@@ -82,21 +82,24 @@ object SchemaDecoder {
                     throw SchemaDecodeException(command, "Use of ']' key is disallowed for any other purpose other than marking the end of an option.")
                 }
 
-                destination = SchemaDefinitionDestination.Name
+                destination = SchemaDefinitionDestination.Type
                 inEnclosure = false
-                continue
+
+                if (index != (schema.length - 1)) {
+                    continue
+                }
             }
 
             if (char == ':') {
-                if (!inEnclosure || destination == SchemaDefinitionDestination.Type) {
+                if (!inEnclosure || destination == SchemaDefinitionDestination.Name) {
                     throw SchemaDecodeException(command, "Use of ':' is disallowed for any other purpose other than marking the separation between an option's name and type.")
                 }
 
-                destination = SchemaDefinitionDestination.Type
+                destination = SchemaDefinitionDestination.Name
                 continue
             }
 
-            if (char == ' ') {
+            if (char == ' ' || index == (schema.length - 1)) {
                 if (!inEnclosure) {
                     // We are dealing with an identifier.
                     if (currentName.isNotEmpty() && currentType.isEmpty()) {
@@ -130,6 +133,7 @@ object SchemaDecoder {
                     // Strictly do not allow double-spacing.
                     throw SchemaDecodeException(command, "Double-space is not allowed in a schema definition.")
                 }
+                continue
             }
 
             when(destination) {
