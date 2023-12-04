@@ -6,6 +6,7 @@ import org.javacord.api.event.message.MessageCreateEvent
 import pw.mihou.traveler.features.commands.options.MessageCommandOption
 import pw.mihou.traveler.features.commands.options.MessageParameters
 import pw.mihou.traveler.features.commands.schema.SchemaDecoder
+import pw.mihou.traveler.features.commands.schema.SchemaOptionTypes
 import pw.mihou.traveler.features.commands.schema.SchemaOptions
 import java.lang.IllegalArgumentException
 import kotlin.jvm.optionals.getOrNull
@@ -35,6 +36,9 @@ class MessageCommandEvent(
 
     val server get() = originalEvent.server.getOrNull()
 
+    // Speed up scanning through schema by not doing a ton of regex each schema.
+    internal var `$schema$cache`: MutableMap<String, Pair<Any, SchemaOptionTypes>>? = mutableMapOf()
+
     private var `$schema`: MessageCommandEventSchema? = null
     val store = command.store.toMutableMap()
 
@@ -46,6 +50,7 @@ class MessageCommandEvent(
                 val result = SchemaDecoder.scan(this, schema)
                 if (result.matches) {
                     `$schema` = MessageCommandEventSchema(api, schema, result.options)
+                    `$schema$cache` = null
                     break
                 }
             }

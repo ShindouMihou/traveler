@@ -1,8 +1,11 @@
+@file:Suppress("LocalVariableName")
+
 package pw.mihou.traveler.features.commands.schema
 
 import pw.mihou.traveler.coroutines.coroutine
 import pw.mihou.traveler.features.commands.MessageCommand
 import pw.mihou.traveler.features.commands.MessageCommandEvent
+import pw.mihou.traveler.features.commands.options.MessageCommandOption
 import java.lang.RuntimeException
 import kotlin.text.StringBuilder
 
@@ -41,24 +44,42 @@ object SchemaDecoder {
 
         for ((index, option) in ev.options.withIndex()) {
             val definition = definitions[index]
-            val value: Any = when(definition.type) {
-                SchemaOptionTypes.Identifier -> option.textRepresentation
-                SchemaOptionTypes.Double -> option.double
-                SchemaOptionTypes.Boolean -> option.boolean
-                SchemaOptionTypes.Float -> option.float
-                SchemaOptionTypes.Integer -> option.int
-                SchemaOptionTypes.Long -> option.long
-                SchemaOptionTypes.Channel -> option.channelId
-                SchemaOptionTypes.Role -> option.roleId
-                SchemaOptionTypes.Text -> option.textRepresentation
-                SchemaOptionTypes.User -> option.userId
-                SchemaOptionTypes.Message -> option.messageLink
-                SchemaOptionTypes.CustomEmoji -> option.customEmojiId
-            } ?: return SchemaResult(false, emptyMap())
+            val `$cache` = ev.`$schema$cache`?.get(definition.name)
+            if (`$cache` != null) {
+                val (cached, cachedType) = `$cache`
+                if (definition.type != cachedType) {
+                    return SchemaResult(false, emptyMap())
+                }
+
+                options[definition.name] = cached
+                continue
+            }
+            val value: Any = get(option, definition.type) ?: return SchemaResult(false, emptyMap())
+            if (ev.`$schema$cache` == null) {
+                throw IllegalStateException("Message ${ev.messageId}'s schema cache is null even though schema scanning isn't complete yet.")
+            }
+            ev.`$schema$cache`!![definition.name] = value to definition.type
             options[definition.name] = value
         }
 
         return SchemaResult(true, options)
+    }
+
+    private fun get(option: MessageCommandOption, type: SchemaOptionTypes): Any? {
+        return when(type) {
+            SchemaOptionTypes.Identifier -> option.textRepresentation
+            SchemaOptionTypes.Double -> option.double
+            SchemaOptionTypes.Boolean -> option.boolean
+            SchemaOptionTypes.Float -> option.float
+            SchemaOptionTypes.Integer -> option.int
+            SchemaOptionTypes.Long -> option.long
+            SchemaOptionTypes.Channel -> option.channelId
+            SchemaOptionTypes.Role -> option.roleId
+            SchemaOptionTypes.Text -> option.textRepresentation
+            SchemaOptionTypes.User -> option.userId
+            SchemaOptionTypes.Message -> option.messageLink
+            SchemaOptionTypes.CustomEmoji -> option.customEmojiId
+        }
     }
 
     fun decode(command: String, schema: String): SchemaDefinition {
