@@ -75,16 +75,6 @@ class MessageCommandEvent(
         return if (`object` is T) `object` else null
     }
 
-    /**
-     * Gets the value of the given key from the [MessageCommandEvent.store].
-     *
-     * @param key   The key to get from the [MessageCommandEvent.store].*
-     * @return The value mapped with the key in [MessageCommandEvent.store], otherwise null.
-     */
-    operator fun get(key: String): Any? {
-        return store[key]
-    }
-
     fun getOption(index: Int) = options.getOrNull(index)
 }
 
