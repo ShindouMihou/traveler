@@ -54,7 +54,7 @@ data class MessageCommandOption(private val api: DiscordApi, val textRepresentat
         }
         val server = match.groupOrNull("server")?.toLongOrNull()
         val channel = match.group("channel").toLong()
-        val id = match.group("id").toLong()
+        val id = match.group("message").toLong()
         return MessageParameters(channel, server, id)
     }
     val cachedMessage: Message? get() = messageLink?.run { api.getCachedMessageById(id).getOrNull() }
