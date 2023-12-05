@@ -9,6 +9,8 @@ import pw.mihou.traveler.configuration.TravelerConfiguration
 import pw.mihou.traveler.coroutines.coroutine
 import pw.mihou.traveler.features.commands.MessageCommand
 import pw.mihou.traveler.features.commands.dispatcher.TravelerMessageDispatcher
+import pw.mihou.traveler.features.commands.interceptors.Afterware
+import pw.mihou.traveler.features.commands.interceptors.Middleware
 import pw.mihou.traveler.features.commands.schema.SchemaDecoder
 import pw.mihou.traveler.logger.LoggingAdapter
 import pw.mihou.traveler.logger.adapters.DefaultLoggingAdapter
@@ -20,6 +22,10 @@ object Traveler: MessageCreateListener {
     internal val commands = mutableListOf<MessageCommand>()
 
     val configuration = TravelerConfiguration()
+
+    //@desc global copy to middlewares
+    var middlewares = mutableListOf<Middleware>()
+    var afterwares = mutableListOf<Afterware>()
 
     @Volatile var logger: LoggingAdapter =
         if (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) == null || LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) is NOPLogger) FastLoggingAdapter

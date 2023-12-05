@@ -41,11 +41,12 @@ class TravelerMessageDispatcher internal constructor() {
 
         val commandEvent = MessageCommandEvent(slicedOptions.map { MessageCommandOption(event.api, it) }, event, command)
 
-        if (command.middlewares.isNotEmpty()) {
+        val middlewares = Traveler.middlewares + command.middlewares
+        if (middlewares.isNotEmpty()) {
             var stopped = false
             val endExecution: EndExecution = { stopped = true }
 
-            for (middleware in command.middlewares) {
+            for (middleware in middlewares) {
                 middleware.on(commandEvent, endExecution)
                 if (stopped) {
                     break
@@ -57,7 +58,9 @@ class TravelerMessageDispatcher internal constructor() {
             }
         }
         command.on(commandEvent)
-        for (afterware in command.afterwares) {
+
+        val afterwares = Traveler.afterwares + command.afterwares
+        for (afterware in afterwares) {
             afterware.on(commandEvent)
         }
     }
