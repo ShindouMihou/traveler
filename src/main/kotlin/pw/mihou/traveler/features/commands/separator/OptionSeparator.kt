@@ -1,8 +1,7 @@
 package pw.mihou.traveler.features.commands.separator
 
 object OptionSeparator {
-    fun separate(text: String): List<String> {
-        val separated = mutableListOf<String>()
+    fun stream(text: String, accumulator: (text: String) -> Boolean) {
 
         val current = StringBuilder()
 
@@ -10,13 +9,15 @@ object OptionSeparator {
         var inQuotations = false
 
         for ((index, char) in text.withIndex()) {
-            fun append() {
+            fun append(): Boolean {
                 val option = current.toString()
-                separated.add(option)
+                val next = accumulator(option)
 
                 current.clear()
                 previous = ' '
                 inQuotations = false
+
+                return next
             }
 
             if (char == '"' || char == '\'') {
@@ -24,7 +25,10 @@ object OptionSeparator {
                 if (previous != '\\') {
                     inQuotations = !inQuotations
                     if (index == (text.length - 1)) {
-                        append()
+                        val next = append()
+                        if (!next) {
+                            break
+                        }
                     }
                     continue
                 }
@@ -32,7 +36,10 @@ object OptionSeparator {
 
             if (char == ' ') {
                 if (!inQuotations) {
-                    append()
+                    val next = append()
+                    if (!next) {
+                        break
+                    }
                     continue
                 }
             }
@@ -41,11 +48,12 @@ object OptionSeparator {
             previous = char
 
             if (index == (text.length - 1)) {
-                append()
+                val next = append()
+                if (!next) {
+                    break
+                }
                 continue
             }
         }
-
-        return separated
     }
 }

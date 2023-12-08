@@ -18,17 +18,29 @@ class TravelerMessageDispatcher internal constructor() {
         if (event.messageAuthor.isBotUser) return
         if (event.messageContent.isEmpty()) return
 
-        val options = OptionSeparator.separate(event.messageContent.trim())
-        if (options.isEmpty()) {
-            // How would this happen???
-            throw IllegalStateException("No content found during separation, this is likely a bug.")
-        }
+        val options = mutableListOf<String>()
+        var commandName: String? = null
+        OptionSeparator.stream(event.messageContent.trim()) { arg: String ->
+            if (options.isEmpty()) {
+                // first arg, otherwise the analysis section.
+                val (min, max) = Traveler.`commands$minsize` to Traveler.`commands$maxsize`
+                if (arg.length !in min..max) {
+                    return@stream false
+                }
 
+                commandName = arg
+                return@stream true
+            }
+
+            options += arg
+            true
+        }
+        if (commandName == null) return
+
+        var name = commandName as String
         val server = event.server
 
         val prefix = Traveler.configuration.prefix.loader(server.map { it.id }.getOrNull())
-
-        var name = options[0]
         if (!name.startsWith(prefix)) {
             return
         }

@@ -27,14 +27,42 @@ object Traveler: MessageCreateListener {
     var middlewares = mutableListOf<Middleware>()
     var afterwares = mutableListOf<Afterware>()
 
+    //@suppress intellij cannot check for usage of properties with these kinds of naems.
+    @Suppress("UNUSED", "ObjectPropertyName")
+    internal var `commands$maxsize` = 0
+    @Suppress("UNUSED", "ObjectPropertyName")
+    internal var `commands$minsize` = 0
+
     @Volatile var logger: LoggingAdapter =
         if (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) == null || LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) is NOPLogger) FastLoggingAdapter
         else DefaultLoggingAdapter()
 
+    private fun computeMinMax() {
+        // compute placeholder
+        var min = Int.MAX_VALUE
+        var max = Int.MIN_VALUE
+
+        for (command in this.commands) {
+            val size = command.name.length
+            if (size > max) {
+                max = size
+            }
+
+            if (size < min) {
+                min = size
+            }
+        }
+
+        `commands$maxsize` = max
+        `commands$minsize` = min
+    }
+
+    @Suppress("UNUSED")
     fun remove(vararg commands: MessageCommand) {
         for (command in commands) {
             this.commands.remove(command)
         }
+        computeMinMax()
     }
 
     fun add(vararg commands: MessageCommand) {
@@ -46,6 +74,7 @@ object Traveler: MessageCreateListener {
 
             this.commands.add(command)
         }
+        computeMinMax()
     }
 
     override fun onMessageCreate(event: MessageCreateEvent) {
