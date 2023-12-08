@@ -19,6 +19,12 @@ class TravelerMessageDispatcher internal constructor() {
         if (event.messageContent.isEmpty()) return
 
         val server = event.server
+        if (Traveler.configuration.dispatcher.ignoreDms && server.isEmpty) return
+        if (Traveler.configuration.dispatcher.ignoreServers && server.isPresent) return
+
+        if (server.isPresent && Traveler.configuration.dispatcher.ignoredServers.contains(server.get().id)) return
+        if (Traveler.configuration.dispatcher.ignoredUsers.contains(event.messageAuthor.id)) return
+
         val prefix = Traveler.configuration.prefix.loader(server.map { it.id }.getOrNull())
 
         val options = mutableListOf<String>()
