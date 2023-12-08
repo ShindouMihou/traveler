@@ -18,17 +18,24 @@ class TravelerMessageDispatcher internal constructor() {
         if (event.messageAuthor.isBotUser) return
         if (event.messageContent.isEmpty()) return
 
+        val server = event.server
+        val prefix = Traveler.configuration.prefix.loader(server.map { it.id }.getOrNull())
+
         val options = mutableListOf<String>()
         var commandName: String? = null
         OptionSeparator.stream(event.messageContent.trim()) { arg: String ->
-            if (options.isEmpty()) {
+            if (commandName == null) {
                 // first arg, otherwise the analysis section.
-                val (min, max) = Traveler.`commands$minsize` to Traveler.`commands$maxsize`
+                val (min, max) = (Traveler.`commands$minsize` + prefix.length) to (Traveler.`commands$maxsize` + prefix.length)
                 if (arg.length !in min..max) {
                     return@stream false
                 }
 
-                commandName = arg
+                if (!arg.startsWith(prefix)) {
+                    return@stream false
+                }
+
+                commandName = arg.removePrefix(prefix)
                 return@stream true
             }
 
@@ -36,15 +43,7 @@ class TravelerMessageDispatcher internal constructor() {
             true
         }
         if (commandName == null) return
-
-        var name = commandName as String
-        val server = event.server
-
-        val prefix = Traveler.configuration.prefix.loader(server.map { it.id }.getOrNull())
-        if (!name.startsWith(prefix)) {
-            return
-        }
-        name = name.removePrefix(prefix)
+        val name = commandName as String
 
         val command = Traveler.commands.firstOrNull { it.name == name } ?: return
         val slicedOptions =
