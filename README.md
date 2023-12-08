@@ -68,7 +68,7 @@ A subcommand shouldn't be enclosed in a bracket, similarly, subcommands aren't r
 as you can simply check if the schema caught has this subcommand, for example:
 ```kotlin
 val schema = event.schema ?: return
-if (schema.schema.startsWith("subcommand")) {
+if (schema.matched.startsWith("subcommand")) {
     // do something
 }
 ```

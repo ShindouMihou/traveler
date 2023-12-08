@@ -78,7 +78,7 @@ class MessageCommandEvent(
     fun getOption(index: Int) = options.getOrNull(index)
 }
 
-data class MessageCommandEventSchema(private val api: DiscordApi, val schema: String, val options: SchemaOptions) {
+data class MessageCommandEventSchema(private val api: DiscordApi, val matched: String, val options: SchemaOptions) {
     private inline fun <reified T> Any.cast(): T? {
         return if (this is T) this else null
     }
