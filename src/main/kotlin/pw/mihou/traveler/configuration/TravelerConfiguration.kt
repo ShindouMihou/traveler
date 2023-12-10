@@ -11,7 +11,6 @@ class TravelerPrefixConfiguration internal constructor() {
 }
 
 class TravelerDispatchConfiguration internal constructor() {
-
     /**
      * Servers enlisted in this will no longer have any commands dispatched to them. This is used
      * to disable message commands entirely for that given server at a dispatcher level, which means

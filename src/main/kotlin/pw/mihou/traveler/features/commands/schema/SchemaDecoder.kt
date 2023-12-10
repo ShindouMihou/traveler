@@ -67,7 +67,7 @@ object SchemaDecoder {
 
     private fun get(option: MessageCommandOption, type: SchemaOptionTypes): Any? {
         return when(type) {
-            SchemaOptionTypes.Identifier -> option.textRepresentation
+            SchemaOptionTypes.Identifier -> Identifier
             SchemaOptionTypes.Double -> option.double
             SchemaOptionTypes.Boolean -> option.boolean
             SchemaOptionTypes.Float -> option.float
@@ -127,7 +127,7 @@ object SchemaDecoder {
                 if (!inEnclosure) {
                     // We are dealing with an identifier.
                     if (currentName.isNotEmpty() && currentType.isEmpty()) {
-                        blocks += SchemaDefinitionOption(name = currentName.toString(), type = SchemaOptionTypes.Identifier)
+                        blocks += SchemaDefinitionOption(name = "identifier:$currentName", type = SchemaOptionTypes.Identifier)
 
                         currentName.clear()
                         currentType.clear()
@@ -174,7 +174,6 @@ object SchemaDecoder {
 }
 
 class SchemaDecodeException(command: String, message: String): RuntimeException("Cannot decode schema for command $command: $message")
-
 data class SchemaResult(val matches: Boolean, val options: SchemaOptions)
 data class SchemaDefinitionOption(val name: String, val type: SchemaOptionTypes)
 
@@ -192,3 +191,5 @@ enum class SchemaOptionTypes(val key: String) {
 enum class SchemaDefinitionDestination {
     Name, Type
 }
+
+object Identifier

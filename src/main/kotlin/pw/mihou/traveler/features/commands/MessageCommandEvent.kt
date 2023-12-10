@@ -5,6 +5,7 @@ import org.javacord.api.DiscordApi
 import org.javacord.api.event.message.MessageCreateEvent
 import pw.mihou.traveler.features.commands.options.MessageCommandOption
 import pw.mihou.traveler.features.commands.options.MessageParameters
+import pw.mihou.traveler.features.commands.schema.Identifier
 import pw.mihou.traveler.features.commands.schema.SchemaDecoder
 import pw.mihou.traveler.features.commands.schema.SchemaOptionTypes
 import pw.mihou.traveler.features.commands.schema.SchemaOptions
@@ -82,6 +83,8 @@ data class MessageCommandEventSchema(private val api: DiscordApi, val matched: S
     private inline fun <reified T> Any.cast(): T? {
         return if (this is T) this else null
     }
+
+    fun isIdentifierPresent(name: String) = options[name]?.cast<Identifier>() != null
 
     fun getArgumentStringByName(name: String) = options[name]?.cast<String>()
     fun getArgumentLongByName(name: String) = options[name]?.cast<Long>()
