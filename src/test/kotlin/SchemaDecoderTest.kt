@@ -12,8 +12,8 @@ class SchemaDecoderTest {
 
         println(definitions)
 
-        assert(definitions[0], "user", SchemaOptionTypes.User)
-        assert(definitions[1], "message", SchemaOptionTypes.Text)
+        assert(definitions.options[0], "user", SchemaOptionTypes.User)
+        assert(definitions.options[1], "message", SchemaOptionTypes.Text)
     }
 
     private fun assert(option: SchemaDefinitionOption, name: String, type: SchemaOptionTypes) {

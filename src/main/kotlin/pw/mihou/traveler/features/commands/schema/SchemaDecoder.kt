@@ -10,9 +10,9 @@ import java.lang.RuntimeException
 import kotlin.text.StringBuilder
 
 typealias SchemaOptions = Map<String, Any?>
-typealias SchemaDefinition = List<SchemaDefinitionOption>
 
 object SchemaDecoder {
+    data class SchemaDefinition(val options: List<SchemaDefinitionOption>, val hasVarargs: Boolean)
 
     private val cache = mutableMapOf<String, SchemaDefinition>()
 
@@ -37,13 +37,30 @@ object SchemaDecoder {
         val definitions = cache.computeIfAbsent(schema) {
             decode(ev.command.name, schema)
         }
-        if (definitions.size != ev.options.size) {
+        if (!definitions.hasVarargs && definitions.options.size != ev.options.size) {
             return SchemaResult(false, emptyMap())
         }
         val options = mutableMapOf<String, Any?>()
 
         for ((index, option) in ev.options.withIndex()) {
-            val definition = definitions[index]
+            if (definitions.options.size < index) {
+                if (!definitions.hasVarargs) {
+                    return SchemaResult(false, emptyMap())
+                }
+
+                val definition = definitions.options.last()
+
+                val originalValue = options[definition.name] as? String
+                val appendValue = get(option, SchemaOptionTypes.Text)
+                if (originalValue == null) {
+                    options[definition.name] = appendValue
+                } else {
+                    options[definition.name] = "$originalValue $appendValue"
+                }
+                continue
+            }
+
+            val definition = definitions.options[index]
             val `$cache` = ev.`$schema$cache`?.get(definition.name)
             if (`$cache` != null) {
                 val (cached, cachedType) = `$cache`
@@ -91,6 +108,8 @@ object SchemaDecoder {
         var inEnclosure = false
         var destination = SchemaDefinitionDestination.Type
 
+        var hasVarargs = false
+
         for ((index, char) in schema.withIndex()) {
             if (char == '[') {
                 if (inEnclosure) {
@@ -135,7 +154,7 @@ object SchemaDecoder {
                     }
 
                     if (currentName.isNotEmpty() && currentType.isNotEmpty()) {
-                        val constructedName = currentName.toString()
+                        var constructedName = currentName.toString()
                         val constructedType = currentType.toString().lowercase()
 
                         val identifiedType = SchemaOptionTypes.find(constructedType)
@@ -146,6 +165,27 @@ object SchemaDecoder {
                             throw SchemaDecodeException(command, "Option $constructedName cannot use the type $constructedType as it's a special type.")
                         }
 
+                        val isVarargOption = constructedName.startsWith("*")
+                        if (isVarargOption) {
+                            constructedName = constructedName.removePrefix("*")
+                            if (hasVarargs) {
+                                throw SchemaDecodeException(command,
+                                    "Option $constructedName is a variable argument option, but there is already another variable argument option. " +
+                                            "There cannot be more than one variable argument options in a schema."
+                                )
+                            }
+                            if (identifiedType != SchemaOptionTypes.Text) {
+                                throw SchemaDecodeException(command,
+                                    "Option $constructedName is a variable argument option that isn't the type of 'string'. Variable argument options can " +
+                                            "only be of 'string' at this version of Traveler.")
+                            }
+                            hasVarargs = true
+                        }
+
+                        if (hasVarargs && !isVarargOption) {
+                            throw SchemaDecodeException(command,
+                                "Option $constructedName is before a variable argument option. You cannot put an option after a variable argument option.")
+                        }
 
                         blocks += SchemaDefinitionOption(name = constructedName, type = identifiedType)
 
@@ -169,13 +209,13 @@ object SchemaDecoder {
         if (blocks.isEmpty()) {
             throw SchemaDecodeException(command, "No property in the schema was decoded properly.")
         }
-        return blocks
+        return SchemaDefinition(blocks, hasVarargs)
     }
 }
 
 class SchemaDecodeException(command: String, message: String): RuntimeException("Cannot decode schema for command $command: $message")
 data class SchemaResult(val matches: Boolean, val options: SchemaOptions)
-data class SchemaDefinitionOption(val name: String, val type: SchemaOptionTypes)
+data class SchemaDefinitionOption(val name: String, val type: SchemaOptionTypes, val vararg: Boolean = false)
 
 enum class SchemaOptionTypes(val key: String) {
     User("user"), Channel("channel"), Role("role"), Message("message"), CustomEmoji("emoji"),
