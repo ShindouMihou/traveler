@@ -43,7 +43,7 @@ object SchemaDecoder {
         val options = mutableMapOf<String, Any?>()
 
         for ((index, option) in ev.options.withIndex()) {
-            if (definitions.options.size < index) {
+            if (index >= definitions.options.size) {
                 if (!definitions.hasVarargs) {
                     return SchemaResult(false, emptyMap())
                 }
